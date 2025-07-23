@@ -1,1 +1,176 @@
-# tetris-for-multiplayers
+# 🎮 Tetris Multiplayer Game
+
+실시간 멀티플레이어 테트리스 게임입니다. WebSocket 서버 없이 로컬 스토리지와 URL 파라미터를 사용하여 멀티플레이어 기능을 구현했습니다.
+
+## 🚀 주요 기능
+
+### 🎯 게임 기능
+- **클래식 테트리스 게임플레이** - 7가지 테트로미노 블록
+- **Hold 기능** - 블록을 보관하고 나중에 사용
+- **Next 블록 미리보기** - 다음 블록을 미리 확인
+- **Hard Drop** - 스페이스바로 즉시 바닥에 배치
+- **라인 클리어** - 완성된 줄 제거 및 점수 획득
+- **게임 오버 시스템** - 게임 종료 시 점수 표시
+
+### 👥 멀티플레이어 기능
+- **방 생성/참가** - 고유한 방 코드로 멀티플레이
+- **실시간 동기화** - 다른 플레이어의 게임 상태 실시간 표시
+- **플레이어 목록** - 참가자 목록과 상태 확인
+- **게임 시작 제한** - 모든 플레이어 준비 시에만 시작 가능
+- **게임 오버 표시** - 다른 플레이어 게임 오버 시 시각적 피드백
+
+### 🎨 UI/UX
+- **반응형 디자인** - 다양한 화면 크기에 대응
+- **직관적인 컨트롤** - 키보드 및 마우스 조작
+- **실시간 점수 표시** - 현재 점수와 다른 플레이어 점수
+- **게임 상태 표시** - 대기, 진행 중, 게임 오버 상태
+
+## 🛠️ 기술 스택
+
+- **Frontend**: TypeScript, HTML5 Canvas, CSS3
+- **Build Tool**: Vite
+- **멀티플레이어**: Local Storage, URL Parameters
+- **실시간 동기화**: Polling 기반 상태 업데이트
+
+## 📦 설치 및 실행
+
+### 1. 저장소 클론
+```bash
+git clone https://github.com/kyungjinleelee/tetris-for-multiplayers.git
+cd tetris-for-multiplayers
+```
+
+### 2. 의존성 설치
+```bash
+npm install
+```
+
+### 3. 개발 서버 실행
+```bash
+npm run dev
+```
+
+### 4. 브라우저에서 접속
+```
+http://localhost:5173
+```
+
+## 🎮 게임 조작법
+
+### 키보드 컨트롤
+- **← →** : 블록 좌우 이동
+- **↓** : 블록 빠르게 떨어뜨리기
+- **↑** : 블록 회전
+- **스페이스바** : Hard Drop (즉시 바닥에 배치)
+- **X** : Hold (블록 보관/교환)
+
+### 마우스 컨트롤
+- **Start 버튼** : 게임 시작
+- **Hold 영역 클릭** : 블록 보관/교환
+- **방 생성/참가 버튼** : 멀티플레이어 모드
+
+## 🎯 멀티플레이어 가이드
+
+### 1. 방 생성
+1. 닉네임 입력
+2. "Create Room" 버튼 클릭
+3. 생성된 방 코드를 다른 플레이어와 공유
+
+### 2. 방 참가
+1. "Join Room" 버튼 클릭
+2. 방 코드 입력
+3. 닉네임 입력 후 참가
+
+### 3. 게임 시작
+- 모든 플레이어가 준비되면 "Start" 버튼 활성화
+- 한 명이 시작하면 다른 플레이어들도 자동으로 시작
+
+### 4. 실시간 동기화
+- 다른 플레이어의 게임 보드가 실시간으로 표시
+- 게임 오버 시 해당 플레이어의 보드에 "GAME OVER" 표시
+- 점수와 게임 상태가 실시간 업데이트
+
+## 🏗️ 프로젝트 구조
+
+```
+tetris-for-multiplayers/
+├── src/
+│   ├── main.ts          # 메인 게임 로직
+│   └── style.css        # 게임 스타일
+├── public/
+│   └── vite.svg         # Vite 로고
+├── index.html           # 메인 HTML
+├── package.json         # 프로젝트 설정
+├── tsconfig.json        # TypeScript 설정
+└── README.md           # 프로젝트 문서
+```
+
+## 🎯 게임 규칙
+
+### 기본 규칙
+- 7가지 테트로미노 블록을 조작하여 가로줄을 완성
+- 완성된 줄은 사라지고 점수 획득
+- 블록이 맨 위에 닿으면 게임 오버
+
+### 점수 시스템
+- 1줄 클리어: 100점
+- 2줄 클리어: 300점
+- 3줄 클리어: 500점
+- 4줄 클리어: 800점
+- Hard Drop: 추가 점수
+
+### 멀티플레이어 규칙
+- 모든 플레이어가 준비되어야 게임 시작 가능
+- 개별 게임 오버 시 해당 플레이어만 종료
+- 다른 플레이어의 게임 상태 실시간 확인 가능
+
+## 🔧 개발 정보
+
+### 개발 환경
+- **Node.js**: 18.0.0 이상
+- **npm**: 8.0.0 이상
+- **TypeScript**: 5.0.0 이상
+
+### 빌드 명령어
+```bash
+# 개발 서버
+npm run dev
+
+# 프로덕션 빌드
+npm run build
+
+# 빌드 미리보기
+npm run preview
+```
+
+## 🐛 알려진 이슈
+
+- 로컬 스토리지 기반 동기화로 인한 약간의 지연
+- 브라우저 새로고침 시 게임 상태 초기화
+- 동시 접속자 수 제한 (브라우저 로컬 스토리지 용량)
+
+## 🤝 기여하기
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## �� 라이선스
+
+이 프로젝트는 MIT 라이선스 하에 배포됩니다. 자세한 내용은 `LICENSE` 파일을 참조하세요.
+
+## 👨‍💻 개발자
+
+**kyungjinleelee** - [GitHub](https://github.com/kyungjinleelee)
+
+## 🙏 감사의 말
+
+- 테트리스 게임 로직 참고 자료들
+- Vite 개발 도구
+- TypeScript 커뮤니티
+
+---
+
+⭐ 이 프로젝트가 도움이 되었다면 스타를 눌러주세요!
