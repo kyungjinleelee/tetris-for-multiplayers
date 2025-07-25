@@ -47,17 +47,6 @@ cd tetris-for-multiplayers
 npm install
 ```
 
-**참고**: Windows PowerShell에서 실행 정책 오류가 발생하는 경우:
-```bash
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-npm install
-```
-
-**또는 Command Prompt 사용:**
-```cmd
-npm install
-```
-
 ### 3. 시그널링 서버 실행
 ```bash
 npm run server
@@ -179,8 +168,7 @@ npm run preview
 
 ## 🔄 최근 업데이트 (2025-07-25)
 
-### 🎨 UI/UX 현대화 (TailwindCSS)
-
+### 🎨 UI/UX 개선 (TailwindCSS)
 기존 CSS를 TailwindCSS로 완전히 교체하여 UI를 개선했습니다.
 
 #### 🎨 디자인 개선사항
@@ -240,4 +228,3 @@ npm run preview
 | 동시 접속자 | 제한적 | 확장 가능 | 300%+ |
 | 연결 안정성 | 낮음 | 높음 | 200%+ |
 | 서버 부하 | 높음 | 낮음 | 70% 감소 |
-=======
