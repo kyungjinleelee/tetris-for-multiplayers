@@ -1,15 +1,24 @@
 {
-  "name": "tetris",
+  "name": "tetris-multiplayer",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "server": "node server/signaling-server.js",
+    "dev:full": "concurrently \"npm run server\" \"npm run dev\""
   },
   "devDependencies": {
-    "typescript": "~5.8.3",
-    "vite": "^7.0.4"
+    "typescript": "^5.2.2",
+    "vite": "^5.0.8",
+    "concurrently": "^8.2.2",
+    "tailwindcss": "^3.4.0",
+    "postcss": "^8.4.31",
+    "autoprefixer": "^10.4.16"
+  },
+  "dependencies": {
+    "ws": "^8.14.2"
   }
 }
