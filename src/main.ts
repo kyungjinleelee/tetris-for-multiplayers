@@ -1,65 +1,101 @@
 import './style.css'
+import { WebRTCClient } from './webrtc-client'
+import type { GameState } from './webrtc-client'
 
 // 테트리스 UI 렌더링
 const app = document.querySelector<HTMLDivElement>('#app')!
 app.innerHTML = `
-  <div id="game-container">
-    <div id="player-info">
-      <div id="player-name">Player</div>
-      <div id="room-info">Room: <span id="room-id">-</span></div>
-    </div>
-    
-    <div id="tetris-ui">
-      <div id="left-panel">
-        <div id="hold-section">
-          <div>Hold</div>
-          <canvas id="hold-canvas" width="120" height="120" tabindex="0"></canvas>
+  <div class="h-screen tetris-gradient flex items-center justify-center p-4 overflow-hidden">
+    <div class="w-full h-full max-w-7xl">
+      <!-- 게임 컨테이너 -->
+      <div class="glass-effect rounded-3xl p-6 shadow-2xl h-full flex flex-col">
+        <!-- 플레이어 정보 헤더 -->
+        <div class="flex justify-between items-center mb-4 p-3 glass-effect rounded-2xl flex-shrink-0">
+          <div class="text-xl font-bold text-white" id="player-name">Player</div>
+          <div class="text-base text-white/80">Room: <span id="room-id" class="font-mono bg-white/20 px-2 py-1 rounded-lg">-</span></div>
         </div>
-        <div id="players-section">
-          <div>Players</div>
-          <div id="players-list"></div>
+        
+        <!-- 메인 게임 UI -->
+        <div class="flex-1 flex flex-col lg:flex-row gap-4 min-h-0">
+          <!-- 왼쪽 패널 -->
+          <div class="space-y-4 flex-shrink-0 lg:w-48 order-2 lg:order-1">
+            <!-- Hold 섹션 -->
+            <div class="tetris-panel p-3">
+              <div class="text-lg font-bold text-white mb-2">Hold</div>
+              <canvas id="hold-canvas" width="80" height="80" class="tetris-canvas mx-auto" tabindex="0"></canvas>
+            </div>
+            
+            <!-- 플레이어 목록 -->
+            <div class="tetris-panel p-3">
+              <div class="text-lg font-bold text-white mb-2">Players</div>
+              <div id="players-list" class="space-y-1 max-h-32 overflow-y-auto"></div>
+            </div>
+          </div>
+          
+          <!-- 메인 게임 영역 -->
+          <div class="flex-1 flex justify-center items-center order-1 lg:order-2">
+            <!-- 메인 게임 -->
+            <div class="flex justify-center items-center">
+              <div class="relative">
+                <canvas id="tetris-canvas" width="240" height="400" class="tetris-canvas shadow-2xl" tabindex="0"></canvas>
+                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div class="text-4xl font-bold text-white/20 hidden" id="game-over-text">GAME OVER</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 오른쪽 패널 -->
+          <div class="space-y-4 flex-shrink-0 lg:w-48 order-3">
+            <!-- Next 섹션 -->
+            <div class="tetris-panel p-3">
+              <div class="text-lg font-bold text-white mb-2">Next</div>
+              <canvas id="next-canvas" width="80" height="80" class="tetris-canvas mx-auto" tabindex="0"></canvas>
+            </div>
+            
+            <!-- 게임 정보 -->
+            <div class="tetris-panel p-3">
+              <div class="text-xl font-bold text-white mb-4">Score: <span id="score" class="text-green-400">0</span></div>
+              <div class="space-y-3">
+                <button id="start-btn" class="tetris-button w-full text-sm py-2">Start Game</button>
+                <button id="share-btn" class="tetris-button w-full bg-gradient-to-r from-green-600 to-blue-600 text-sm py-2">Share Room</button>
+              </div>
+            </div>
+            
+            <!-- 다른 플레이어들 -->
+            <div class="tetris-panel p-3">
+              <div class="text-lg font-bold text-white mb-3 text-center">Other Players</div>
+              <div id="other-players-grid" class="grid gap-2"></div>
+            </div>
+          </div>
         </div>
-      </div>
-      
-      <div id="main-game">
-        <canvas id="tetris-canvas" width="240" height="400" tabindex="0"></canvas>
-      </div>
-      
-      <div id="right-section">
-        <div id="next-section">
-          <div>Next</div>
-          <canvas id="next-canvas" width="120" height="120" tabindex="0"></canvas>
-        </div>
-        <div id="tetris-info">
-          <div>Score: <span id="score">0</span></div>
-          <button id="start-btn">Start</button>
-          <button id="share-btn">Share Room</button>
-        </div>
-      </div>
-      
-      <div id="other-players">
-        <div id="other-players-title">Other Players</div>
-        <div id="other-players-grid"></div>
       </div>
     </div>
   </div>
   
   <!-- 방 생성/참가 모달 -->
-  <div id="room-modal" class="modal">
-    <div class="modal-content">
-      <h2>Tetris Multiplayer</h2>
-      <div class="input-group">
-        <label for="nickname">Nickname:</label>
-        <input type="text" id="nickname" placeholder="Enter your nickname" maxlength="15">
-      </div>
-      <div class="button-group">
-        <button id="create-room-btn">Create Room</button>
-        <button id="join-room-btn">Join Room</button>
-      </div>
-      <div class="input-group" id="room-input-group" style="display: none;">
-        <label for="room-code">Room Code:</label>
-        <input type="text" id="room-code" placeholder="Enter room code">
-        <button id="join-room-submit-btn">Join</button>
+  <div id="room-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+    <div class="tetris-panel max-w-md w-full mx-4 p-8">
+      <h2 class="text-3xl font-bold text-white mb-8 text-center">🎮 Tetris Multiplayer</h2>
+      
+      <div class="space-y-6">
+        <div>
+          <label for="nickname" class="block text-lg font-semibold text-white mb-2">Nickname</label>
+          <input type="text" id="nickname" placeholder="Enter your nickname" maxlength="15" class="tetris-input">
+        </div>
+        
+        <div class="flex gap-4">
+          <button id="create-room-btn" class="tetris-button flex-1">Create Room</button>
+          <button id="join-room-btn" class="tetris-button flex-1 bg-gradient-to-r from-green-600 to-blue-600">Join Room</button>
+        </div>
+        
+        <div id="room-input-group" class="space-y-4 hidden">
+          <div>
+            <label for="room-code" class="block text-lg font-semibold text-white mb-2">Room Code</label>
+            <input type="text" id="room-code" placeholder="Enter room code" class="tetris-input">
+          </div>
+          <button id="join-room-submit-btn" class="tetris-button w-full bg-gradient-to-r from-orange-600 to-red-600">Join Room</button>
+        </div>
       </div>
     </div>
   </div>
@@ -69,6 +105,10 @@ app.innerHTML = `
 const COLS = 10;
 const ROWS = 20;
 const BLOCK_SIZE = 36; // 캔버스 크기와 맞춤 (36x20=720, 36x10=360)
+
+// WebRTC 관련 변수
+let webrtcClient: WebRTCClient | null = null;
+const SIGNALING_SERVER_URL = 'ws://localhost:3001';
 
 // 테트로미노 모양 정의 (회전 포함)
 const TETROMINOS = [
@@ -488,6 +528,12 @@ function stopGame() {
 // 키보드 이벤트
 window.addEventListener('keydown', (e) => {
   if (!current || gameOver) return;
+  
+  // 게임 관련 키는 기본 동작 방지
+  if (['ArrowLeft', 'ArrowRight', 'ArrowDown', 'ArrowUp', ' ', 'x', 'X'].includes(e.key)) {
+    e.preventDefault();
+  }
+  
   switch (e.key) {
     case 'ArrowLeft':
       move(-1);
@@ -553,7 +599,7 @@ function generateRoomId(): string {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
-function createRoom() {
+async function createRoom() {
   if (!nicknameInput.value.trim()) {
     alert('Please enter a nickname');
     return;
@@ -565,27 +611,46 @@ function createRoom() {
   roomId = generateRoomId();
   roomIdEl.textContent = roomId;
   
-  players[playerId] = {
-    name: playerName,
-    board: Array.from({ length: ROWS }, () => Array(COLS).fill(null)),
-    score: 0,
-    current: null,
-    next: null,
-    gameOver: false
-  };
+  // WebRTC 클라이언트 생성 및 연결
+  webrtcClient = new WebRTCClient(
+    playerId,
+    roomId,
+    playerName,
+    handleGameStateUpdate,
+    handlePlayerListUpdate
+  );
   
-  hideRoomModal();
-  updateRoomInfo();
-  updatePlayersList();
-  
-  // URL 업데이트
-  updateURL();
-  
-  // 게임 상태 공유 시작
-  startGameStateSharing();
+  try {
+    await webrtcClient.connect(SIGNALING_SERVER_URL);
+    console.log('Connected to signaling server');
+    
+    players[playerId] = {
+      name: playerName,
+      board: Array.from({ length: ROWS }, () => Array(COLS).fill(null)),
+      score: 0,
+      current: null,
+      next: null,
+      gameOver: false
+    };
+    
+    hideRoomModal();
+    updateRoomInfo();
+    updatePlayersList();
+    
+    // URL 업데이트
+    updateURL();
+    
+    // 게임 상태 공유 시작
+    startGameStateSharing();
+    
+    console.log(`Room created: ${roomId}`);
+  } catch (error) {
+    console.error('Failed to connect to signaling server:', error);
+    alert('Failed to connect to server. Please try again.');
+  }
 }
 
-function joinRoom() {
+async function joinRoom() {
   if (!nicknameInput.value.trim() || !roomCodeInput.value.trim()) {
     alert('Please enter nickname and room code');
     return;
@@ -597,33 +662,52 @@ function joinRoom() {
   playerNameEl.textContent = playerName;
   roomIdEl.textContent = roomId;
   
-  // 플레이어 정보 초기화
-  players[playerId] = {
-    name: playerName,
-    board: Array.from({ length: ROWS }, () => Array(COLS).fill(null)),
-    score: 0,
-    current: null,
-    next: null,
-    gameOver: false
-  };
+  // WebRTC 클라이언트 생성 및 연결
+  webrtcClient = new WebRTCClient(
+    playerId,
+    roomId,
+    playerName,
+    handleGameStateUpdate,
+    handlePlayerListUpdate
+  );
   
-  hideRoomModal();
-  updateRoomInfo();
-  updatePlayersList();
-  
-  // URL 업데이트
-  updateURL();
-  
-  // 게임 상태 공유 시작
-  startGameStateSharing();
+  try {
+    await webrtcClient.connect(SIGNALING_SERVER_URL);
+    console.log('Connected to signaling server');
+    
+    // 플레이어 정보 초기화
+    players[playerId] = {
+      name: playerName,
+      board: Array.from({ length: ROWS }, () => Array(COLS).fill(null)),
+      score: 0,
+      current: null,
+      next: null,
+      gameOver: false
+    };
+    
+    hideRoomModal();
+    updateRoomInfo();
+    updatePlayersList();
+    
+    // URL 업데이트
+    updateURL();
+    
+    // 게임 상태 공유 시작
+    startGameStateSharing();
+    
+    console.log(`Joined room: ${roomId}`);
+  } catch (error) {
+    console.error('Failed to connect to signaling server:', error);
+    alert('Failed to connect to server. Please try again.');
+  }
 }
 
 function hideRoomModal() {
-  roomModalEl.style.display = 'none';
+  roomModalEl.classList.add('hidden');
 }
 
 function showRoomModal() {
-  roomModalEl.style.display = 'flex';
+  roomModalEl.classList.remove('hidden');
 }
 
 function updateRoomInfo() {
@@ -648,8 +732,15 @@ function updatePlayersList() {
   playersListEl.innerHTML = '';
   Object.entries(players).forEach(([id, player]) => {
     const playerItem = document.createElement('div');
-    playerItem.className = `player-item ${id === playerId ? 'self' : ''}`;
-    playerItem.textContent = `${player.name} (${player.score})`;
+    playerItem.className = `p-3 rounded-lg border transition-all duration-200 ${
+      id === playerId 
+        ? 'bg-gradient-to-r from-green-600 to-blue-600 text-white border-green-500 shadow-lg' 
+        : 'glass-effect text-white/90 border-white/20 hover:bg-white/10'
+    }`;
+    playerItem.innerHTML = `
+      <div class="font-bold text-lg">${player.name}</div>
+      <div class="text-sm opacity-80">Score: ${player.score}</div>
+    `;
     playersListEl.appendChild(playerItem);
   });
   
@@ -705,23 +796,29 @@ function checkGameStartAvailability() {
 
 function createOtherPlayerCanvas(playerId: string) {
   const playerDiv = document.createElement('div');
-  playerDiv.className = 'other-player';
+  playerDiv.className = 'tetris-panel p-2 flex flex-col items-center';
   
   const playerName = document.createElement('div');
-  playerName.className = 'other-player-name';
+  playerName.className = 'text-xs font-bold text-white mb-1 text-center bg-gradient-to-r from-green-600 to-blue-600 px-1 py-0.5 rounded';
   playerName.textContent = players[playerId].name;
   
   const canvas = document.createElement('canvas');
-  canvas.width = 200;
-  canvas.height = 320;
-  canvas.style.width = '200px';
-  canvas.style.height = '320px';
+  canvas.className = 'tetris-canvas mx-auto shadow-lg';
+  
+  // 초기 크기 설정 (오른쪽 패널에 맞게 작게)
+  canvas.width = 60;
+  canvas.height = 120;
+  canvas.style.width = '60px';
+  canvas.style.height = '120px';
   
   playerDiv.appendChild(playerName);
   playerDiv.appendChild(canvas);
   otherPlayersGridEl.appendChild(playerDiv);
   
   otherPlayerCanvases[playerId] = canvas;
+  
+  // 동적으로 캔버스 크기 조절
+  setTimeout(() => updateOtherPlayersLayout(), 100);
   
   // 즉시 빈 보드 그리기
   const ctx = canvas.getContext('2d')!;
@@ -738,12 +835,37 @@ function createOtherPlayerCanvas(playerId: string) {
   }
 }
 
+// 다른 플레이어들의 레이아웃을 동적으로 조절
+function updateOtherPlayersLayout() {
+  const playerCount = Object.keys(otherPlayerCanvases).length;
+  if (playerCount === 0) return;
+  
+  // 오른쪽 패널에 맞는 그리드 레이아웃 (세로로 배치)
+  otherPlayersGridEl.className = `grid gap-2`;
+  otherPlayersGridEl.style.gridTemplateColumns = '1fr';
+  
+  // 각 캔버스 크기 조절 (오른쪽 패널에 맞게 작게)
+  const containerWidth = otherPlayersGridEl.clientWidth || 180; // 기본값 설정
+  const baseWidth = Math.min(80, containerWidth - 16); // 패딩 고려
+  const baseHeight = (baseWidth * 20) / 10; // 10:20 비율 유지
+  
+  Object.values(otherPlayerCanvases).forEach(canvas => {
+    canvas.width = baseWidth;
+    canvas.height = baseHeight;
+    canvas.style.width = `${baseWidth}px`;
+    canvas.style.height = `${baseHeight}px`;
+  });
+}
+
 function removeOtherPlayerCanvas(playerId: string) {
   const canvas = otherPlayerCanvases[playerId];
   if (canvas && canvas.parentElement) {
     canvas.parentElement.remove();
   }
   delete otherPlayerCanvases[playerId];
+  
+  // 레이아웃 재조정
+  updateOtherPlayersLayout();
 }
 
 function updateOtherPlayerGame(playerId: string, gameState: any) {
@@ -812,115 +934,85 @@ function updateOtherPlayerGame(playerId: string, gameState: any) {
 }
 
 function saveGameState() {
-  const gameState = {
+  if (!webrtcClient || !roomId) return;
+  
+  const gameState: GameState = {
     playerId,
-    roomId,
     playerName,
-    gameState: {
-      board,
-      current,
-      next,
-      score,
-      gameOver,
-      timestamp: Date.now(),
-      gameStartTime: players[playerId]?.gameStartTime
-    }
-  };
-  
-  // 로컬 스토리지에 저장
-  localStorage.setItem(`tetris_${roomId}_${playerId}`, JSON.stringify(gameState));
-  
-  // URL에 게임 상태 인코딩 (간단한 상태만)
-  const urlState = {
-    board: board.map(row => row.map(cell => cell ? 1 : 0).join('')).join(''),
+    board,
+    current,
+    next,
     score,
-    gameOver: gameOver ? 1 : 0
+    gameOver,
+    timestamp: Date.now(),
+    gameStartTime: players[playerId]?.gameStartTime
   };
   
-  const encodedState = btoa(JSON.stringify(urlState));
-  const url = new URL(window.location.href);
-  url.searchParams.set('state', encodedState);
-  window.history.replaceState({}, '', url.toString());
+  webrtcClient.sendGameState(gameState);
 }
 
-function loadOtherPlayersState() {
-  if (!roomId) return;
+// WebRTC를 통한 다른 플레이어 상태 업데이트 핸들러
+function handleGameStateUpdate(peerId: string, gameState: GameState) {
+  if (peerId === playerId) return; // 자신의 상태는 무시
   
-  const roomKey = `tetris_${roomId}`;
-  const keys = Object.keys(localStorage).filter(key => key.startsWith(roomKey));
+  // 다른 플레이어 정보 추가/업데이트
+  if (!players[peerId]) {
+    players[peerId] = {
+      name: gameState.playerName || 'Player',
+      board: Array.from({ length: ROWS }, () => Array(COLS).fill(null)),
+      score: 0,
+      current: null,
+      next: null,
+      gameOver: false
+    };
+    createOtherPlayerCanvas(peerId);
+    updatePlayersList();
+  }
   
-  keys.forEach(key => {
-    const otherPlayerId = key.split('_')[2];
-    if (otherPlayerId && otherPlayerId !== playerId) {
-      try {
-        const data = JSON.parse(localStorage.getItem(key)!);
-        if (data && data.gameState) {
-          // 다른 플레이어 정보 추가/업데이트
-          if (!players[otherPlayerId]) {
-            players[otherPlayerId] = {
-              name: data.playerName || 'Player',
-              board: Array.from({ length: ROWS }, () => Array(COLS).fill(null)),
-              score: 0,
-              current: null,
-              next: null,
-              gameOver: false
-            };
-            createOtherPlayerCanvas(otherPlayerId);
-            updatePlayersList();
-          }
-          
-          // 게임 상태 업데이트 (타임스탬프 확인)
-          const currentTime = Date.now();
-          const dataTime = data.gameState.timestamp || 0;
-          
-          // 1초 이내의 데이터만 사용 (더 빠른 반응)
-          if (currentTime - dataTime < 1000) {
-            // 게임 오버 상태인지 확인
-            if (data.gameState.gameOver) {
-              // 게임 오버 상태면 보드를 초기화하고 현재 블록 제거
-              players[otherPlayerId].board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
-              players[otherPlayerId].current = null;
-              players[otherPlayerId].score = data.gameState.score;
-              players[otherPlayerId].gameOver = true;
-              players[otherPlayerId].gameStartTime = undefined; // 게임 오버 시 시작 시간 초기화
-            } else {
-              // 게임 진행 중이면 정상적으로 업데이트
-              players[otherPlayerId].board = data.gameState.board;
-              players[otherPlayerId].score = data.gameState.score;
-              players[otherPlayerId].current = data.gameState.current;
-              players[otherPlayerId].gameOver = false;
-              // 게임 시작 시간 업데이트 (새로 시작한 경우)
-              if (data.gameState.gameStartTime) {
-                players[otherPlayerId].gameStartTime = data.gameState.gameStartTime;
-              }
-            }
-            
-            updateOtherPlayerGame(otherPlayerId, data.gameState);
-            updatePlayersList(); // 플레이어 목록도 업데이트
-            checkGameStartAvailability(); // 시작 버튼 상태 재확인
-          } else {
-            // 오래된 데이터라도 기본 상태는 표시 (빈 보드)
-            updateOtherPlayerGame(otherPlayerId, {
-              board: players[otherPlayerId].board,
-              current: null,
-              score: players[otherPlayerId].score,
-              gameOver: players[otherPlayerId].gameOver
-            });
-          }
-        }
-      } catch (e) {
-        console.error('Error loading player state:', e);
-      }
+  // 게임 상태 업데이트
+  if (gameState.gameOver) {
+    // 게임 오버 상태면 보드를 초기화하고 현재 블록 제거
+    players[peerId].board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+    players[peerId].current = null;
+    players[peerId].score = gameState.score;
+    players[peerId].gameOver = true;
+    players[peerId].gameStartTime = undefined;
+  } else {
+    // 게임 진행 중이면 정상적으로 업데이트
+    players[peerId].board = gameState.board;
+    players[peerId].score = gameState.score;
+    players[peerId].current = gameState.current;
+    players[peerId].gameOver = false;
+    if (gameState.gameStartTime) {
+      players[peerId].gameStartTime = gameState.gameStartTime;
+    }
+  }
+  
+  updateOtherPlayerGame(peerId, gameState);
+  updatePlayersList();
+  checkGameStartAvailability();
+}
+
+// WebRTC를 통한 플레이어 목록 업데이트 핸들러
+function handlePlayerListUpdate(playerList: Array<{playerId: string, playerName: string}>) {
+  // 현재 연결된 플레이어들만 유지
+  const currentPlayerIds = new Set(playerList.map(p => p.playerId));
+  
+  // 연결이 끊어진 플레이어들 제거
+  Object.keys(players).forEach(pid => {
+    if (pid !== playerId && !currentPlayerIds.has(pid)) {
+      removeOtherPlayerCanvas(pid);
+      delete players[pid];
     }
   });
+  
+  updatePlayersList();
 }
 
 function startGameStateSharing() {
-  // 주기적으로 게임 상태 저장
+  // 주기적으로 게임 상태 저장 (WebRTC를 통해)
   gameStateInterval = setInterval(() => {
-    // 항상 상태 저장 (게임 시작 전에도 저장하여 다른 플레이어가 상태를 확인할 수 있도록)
     saveGameState();
-    loadOtherPlayersState();
   }, 100); // 0.1초마다 업데이트 (더 빠른 실시간 동기화)
 }
 
@@ -938,7 +1030,6 @@ function initMultiplayer() {
   const roomFromUrl = urlParams.get('room');
   const playerFromUrl = urlParams.get('player');
   const nameFromUrl = urlParams.get('name');
-  const stateFromUrl = urlParams.get('state');
 
   if (roomFromUrl) {
     // 방 링크로 접속한 경우
@@ -951,8 +1042,23 @@ function initMultiplayer() {
       playerId = playerFromUrl;
       playerName = nameFromUrl;
       playerNameEl.textContent = playerName;
-      hideRoomModal();
-      startGameStateSharing();
+      
+      // WebRTC 클라이언트 재연결
+      webrtcClient = new WebRTCClient(
+        playerId,
+        roomId,
+        playerName,
+        handleGameStateUpdate,
+        handlePlayerListUpdate
+      );
+      
+      webrtcClient.connect(SIGNALING_SERVER_URL).then(() => {
+        hideRoomModal();
+        startGameStateSharing();
+      }).catch((error) => {
+        console.error('Failed to reconnect:', error);
+        showRoomModal();
+      });
     } else {
       // 새 플레이어로 참가
       showRoomModal();
@@ -973,6 +1079,11 @@ resetBoard();
 drawBoard();
 drawHold();
 drawNext();
+
+// 윈도우 리사이즈 시 레이아웃 업데이트
+window.addEventListener('resize', () => {
+  updateOtherPlayersLayout();
+});
 
 // 멀티플레이어 초기화
 initMultiplayer();
